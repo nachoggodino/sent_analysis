@@ -63,11 +63,24 @@ PREP_LAUGHTER = False
 PREP_LETREP = False
 PREP_XQUE = False
 PREP_ALL = True
+
+EMB_PREP_EMOJI = False
+EMB_PREP_HASHTAGS = False
+EMB_PREP_USERNAME = False
+EMB_PREP_URL = False
+EMB_PREP_PUNCT = False
+EMB_PREP_NUMBER = False
+EMB_PREP_LOWER = False
+EMB_PREP_LAUGHTER = False
+EMB_PREP_LETREP = False
+EMB_PREP_XQUE = False
+EMB_PREP_ALL = True
+
 B_STORE_PREPROCESSED = False
 PREP_FILE_NAME = 'allPrep'
 
 # TODO                                      FEATURES
-#  B_FEAT_LENGTH = True
+B_FEAT_LENGTH = True
 B_FEAT_QUESTIONMARK = True
 B_FEAT_EXCLAMARK = True
 B_FEAT_LET_REP = True
@@ -85,25 +98,23 @@ FT_WORDGRAM = 2
 FT_EPOCH = 5
 
 # At least one of those has to be True
-bWikipedia = False
-bWikipediaAligned = False
-bCommonCrawl = False
-bINGEOTEC = True
+B_WIKIPEDIA = False
+B_WIKIPEDIA_ALIGNED = False
+B_COMMONCRAWL = False
+B_INGEOTEC = True
 
-# Either one of the following three options has to be True
-bTrainModel = True  # True if you want to train a model with the parameters set
-bSaveModel = True  # True for saving the model at fasttext/models. The model had to be trained before
-bLoadModel = False  # True for loading a model with that name
-
-bPreprocess = True  # True for applying a preprocessing
-bLibreOffice = False
-bLemmatize = False
-bTokenize = False
-bBackTranslation = False
-bTrainPlusDev = True
-bUpsampling = True
+B_FT_LIBREOFFICE = False
+B_FT_LEMMATIZE = False
+B_FT_TOKENIZE = False
+B_FT_UPSAMPLING = False
 
 # TODO                                      BERT
 BERT_MODEL_PATH = './bert/models'
 BERT_MODEL_NAME = 'cross_for_TFG'
 
+bStoreFiles = True
+
+B_BERT_LIBREOFFICE = False
+B_BERT_LEMMATIZE = False
+B_BERT_TOKENIZE = False
+B_BERT_UPSAMPLING = True

@@ -56,12 +56,12 @@ if __name__ == '__main__':
             train_data = utils.perform_upsampling(train_data)
 
         if bPreprocess:
-            train_data['content'] = tweet_preprocessing.preprocess(train_data['content'], bLowercasing=True,
-                                                                   bPunctuation=True, bAll=False)
-            dev_data['content'] = tweet_preprocessing.preprocess(dev_data['content'], bLowercasing=True,
-                                                                 bPunctuation=True, bAll=False)
-            test_data['content'] = tweet_preprocessing.preprocess(test_data['content'], bLowercasing=True,
-                                                                  bPunctuation=True, bAll=False)
+            train_data['content'] = tweet_preprocessing.preprocess(train_data['content'], lowercasing=True,
+                                                                   punctuation=True, all_prep=False)
+            dev_data['content'] = tweet_preprocessing.preprocess(dev_data['content'], lowercasing=True,
+                                                                 punctuation=True, all_prep=False)
+            test_data['content'] = tweet_preprocessing.preprocess(test_data['content'], lowercasing=True,
+                                                                  punctuation=True, all_prep=False)
 
         if bTokenize:
             print("Tokenizing...")

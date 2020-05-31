@@ -1,5 +1,4 @@
 import re
-
 import numpy
 import pandas
 from sklearn import preprocessing
@@ -19,11 +18,6 @@ from imblearn.over_sampling import RandomOverSampler
 
 def untokenize_sentence(simple_list):
     return TreebankWordDetokenizer().detokenize(simple_list)
-
-
-def lemmatize_sentence(sentence, lemmatizer):
-    data = untokenize_sentence(sentence)
-    return [token.lemma_ for token in lemmatizer(data)]
 
 
 def encode_label(list_of_labels):
@@ -69,7 +63,7 @@ def csv2ftx(data, labels, sLang, sPhase, folder, filename_ending=''):
         filename_ending = '_' + filename_ending
     result['labels'] = ['__label__' + str(label) for label in labels]
     result['content'] = data
-    result.to_csv('dataset/{}/intertass_{}_{}{}.txt'.format(folder, sLang, sPhase, filename_ending), header=None, index=None, sep=' ')
+    result.to_csv('../dataset/{}/intertass_{}_{}{}.txt'.format(folder, sLang, sPhase, filename_ending), header=None, index=None, sep=' ')
     return
 
 

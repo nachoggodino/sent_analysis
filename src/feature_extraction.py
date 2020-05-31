@@ -1,8 +1,40 @@
 import re
 import pandas as pd
 from textacy import keyterms
+from src.config import *
 
 regex_uppercase = re.compile(r"\b[A-Z][A-Z]+\b")  # TODO
+
+
+def extract_features(data, feed):
+    features = pd.DataFrame()
+    if B_FEAT_LENGTH:
+        features['tweet_length'] = extract_length_feature(data['content'])
+
+    if B_FEAT_UPPERCASE:
+        features['has_uppercase'] = extract_uppercase_feature(data['content'])
+
+    if B_FEAT_QUESTIONMARK:
+        features['question_mark'] = extract_question_mark_feature(data['content'])
+
+    if B_FEAT_EXCLAMARK:
+        features['exclamation_mark'] = extract_exclamation_mark_feature(data['content'])
+
+    if B_FEAT_LET_REP:
+        features['letter_repetition'] = extract_letter_repetition_feature(data['content'])
+
+    if B_FEAT_HASHTAGS:
+        features['hashtag_number'] = extract_hashtag_number_feature(data['content'])
+
+    if B_FEAT_LAUGHTER:
+        features['laughter_feature'] = extract_laughter_feature(data['content'])
+
+    if B_FEAT_VOCABULARY:
+        features['pos_voc'], features['neg_voc'], features['neu_voc'], features['none_voc'] = \
+            extract_sent_words_feature(data['tokenized'], feed['tokenized'], data['sentiment'],
+                                       lexicons=B_LEXICONS, discriminating_terms=B_DISCRIMINATING_TERMS,
+                                       discriminating_words=NUM_DISCRIMINATING_WORDS)
+    return features
 
 
 def extract_length_feature(sentences_list):

@@ -5,13 +5,13 @@ import numpy
 import pandas as pd
 from sklearn import preprocessing
 
-from config import *
+from src.config import *
 
 
 def fetch_data(dataset):
-    if dataset is 'tass2019':
+    if dataset == 'tass2019':
         return read_tass2019_files()
-    elif dataset is 'coah':
+    elif dataset == 'coah':
         return read_coah_files()
 
 
@@ -125,9 +125,9 @@ def get_dataframe_from_ftx_format(lang, folder, set='', train_plus_dev=False):
 
 def read_tass2019_files():
     name = 'tass2019'
-    train_data = pd.read_csv('./dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
-    dev_data = pd.read_csv('./dataset/csv/{}/{}_dev.csv'.format(name, name), encoding='utf-8', sep='\t')
-    test_data = pd.read_csv('./dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
+    train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
+    dev_data = pd.read_csv('../dataset/csv/{}/{}_dev.csv'.format(name, name), encoding='utf-8', sep='\t')
+    test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
 
     if B_REDUCED:
         train_data['sentiment'] = train_data['sentiment'].transform(lambda x: reduce_labels('tass2019', x))
@@ -138,7 +138,7 @@ def read_tass2019_files():
 
 def read_coah_files():
     name = 'coah'
-    coah_data = pd.read_csv('./dataset/csv/{}/{}.csv'.format(name, name), encoding='utf-8', sep='\t')
+    coah_data = pd.read_csv('../dataset/csv/{}/{}.csv'.format(name, name), encoding='utf-8', sep='\t')
     label_dict = coah_data['sentiment'].unique()
 
     if B_REDUCED:
@@ -148,10 +148,10 @@ def read_coah_files():
 
 
 def reduce_labels(dataset, x):
-    if dataset is 'tass2019':
+    if dataset == 'tass2019':
         return x - 1 if x > 1 else x
-    elif dataset is 'coah':
-        return 0 if x < 3 else (1 if x is 3 else 2)
+    elif dataset == 'coah':
+        return 0 if x < 3 else (1 if x == 3 else 2)
 
 
 def dataframe_split(dataframe):
@@ -162,4 +162,4 @@ def dataframe_split(dataframe):
 
 
 if __name__ == '__main__':
-    print(get_dataframe_from_spamore(parse_xml('./dataset/corpus/corpus_spamore.xml')))
+    print(get_dataframe_from_spamore(parse_xml('../dataset/corpus/corpus_spamore.xml')))

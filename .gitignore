@@ -1,0 +1,12 @@
+
+resources/embeddings/
+
+dataset/
+
+__pycache__/
+
+fasttext/
+
+bert/
+
+.idea/

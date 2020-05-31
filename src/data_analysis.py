@@ -344,10 +344,10 @@ lemmatizer = spacy.load("es_core_news_md")  # GLOBAL to avoid loading the model 
 train_data, dev_data, test_data, _ = utils.read_files(LANGUAGE_CODE, bStoreFiles=False)
 train_dev_data = pandas.concat([train_data, dev_data], ignore_index=True).reset_index(drop=True)
 
-train_data['preprocessed'] = tweet_preprocessing.preprocess(train_data['content'], bAll=True)
-dev_data['preprocessed'] = tweet_preprocessing.preprocess(dev_data['content'], bAll=True)
-test_data['preprocessed'] = tweet_preprocessing.preprocess(test_data['content'], bAll=True)
-train_dev_data['preprocessed'] = tweet_preprocessing.preprocess(train_dev_data['content'], bAll=True)
+train_data['preprocessed'] = tweet_preprocessing.preprocess(train_data['content'], all_prep=True)
+dev_data['preprocessed'] = tweet_preprocessing.preprocess(dev_data['content'], all_prep=True)
+test_data['preprocessed'] = tweet_preprocessing.preprocess(test_data['content'], all_prep=True)
+train_dev_data['preprocessed'] = tweet_preprocessing.preprocess(train_dev_data['content'], all_prep=True)
 
 # TOKENIZE
 print("Tokenizing...")

@@ -1,13 +1,7 @@
 import fasttext
 from flair.models import TextClassifier
-from src import config, utils, tweet_preprocessing, data_fetching, fasttext_embedding, bert_embeddings
+from src import utils, tweet_preprocessing, data_fetching, fasttext_embedding, bert_embeddings, feature_extraction
 from src.config import *
-
-from feature_extraction import extract_laughter_feature, extract_exclamation_mark_feature, \
-    extract_hashtag_number_feature, extract_length_feature, extract_letter_repetition_feature, \
-    extract_question_mark_feature, extract_sent_words_feature, extract_uppercase_feature
-from tweet_preprocessing import lemmatize_sentence, libreoffice_processing, perform_upsampling, remove_accents, \
-    remove_stopwords, tokenize_sentence, preprocess
 
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, \
     ExtraTreesClassifier
@@ -95,131 +89,20 @@ if __name__ == '__main__':
 
         if B_UPSAMPLING:
             print('Performing upsampling...')
-            train_data = perform_upsampling(train_data)
+            train_data = tweet_preprocessing.perform_upsampling(train_data)
 
         # PRE-PROCESSING
         print('Data preprocessing...')
-        train_data['preprocessed'] = preprocess(
-            train_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-            bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-            bUsername=PREP_USERNAME, bURL=PREP_URL)
-        dev_data['preprocessed'] = preprocess(
-            dev_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-            bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-            bUsername=PREP_USERNAME, bURL=PREP_URL)
+        train_data['preprocessed'] = tweet_preprocessing.preprocess_data(train_data['content'], 'main')
+        dev_data['preprocessed'] = tweet_preprocessing.preprocess_data(dev_data['content'], 'main')
         if B_TEST_PHASE is True:
-            test_data['preprocessed'] = preprocess(
-                test_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-                bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-                bUsername=PREP_USERNAME, bURL=PREP_URL)
-
-        # TOKENIZE
-        print("Tokenizing...")
-        train_data['tokenized'] = train_data.swifter.progress_bar(False).apply(
-            lambda row: tokenize_sentence(row.preprocessed), axis=1)
-        dev_data['tokenized'] = dev_data.swifter.progress_bar(False).apply(
-            lambda row: tokenize_sentence(row.preprocessed), axis=1)
-        if B_TEST_PHASE is True:
-            test_data['tokenized'] = test_data.swifter.progress_bar(False).apply(
-                lambda row: tokenize_sentence(row.preprocessed), axis=1)
-
-        train_data['final_data'] = train_data['tokenized']
-        dev_data['final_data'] = dev_data['tokenized']
-        if B_TEST_PHASE is True:
-            test_data['final_data'] = test_data['tokenized']
-
-        # LIBREOFFICE CORRECTION
-        if B_LIBREOFFICE:
-            print("LibreOffice Processing... ")
-            train_data['final_data'] = train_data.swifter.apply(lambda row: libreoffice_processing(row.final_data), axis=1)
-            dev_data['final_data'] = dev_data.swifter.apply(lambda row: libreoffice_processing(row.final_data), axis=1)
-            if B_TEST_PHASE is True:
-                test_data['final_data'] = test_data.swifter.apply(lambda row: libreoffice_processing(row.final_data), axis=1)
-
-        # LEMMATIZING
-        if B_LEMMATIZE:
-            print("Lemmatizing data...")
-            train_data['final_data'] = train_data.swifter.apply(lambda row: lemmatize_sentence(row.final_data), axis=1)
-            dev_data['final_data'] = dev_data.swifter.apply(lambda row: lemmatize_sentence(row.final_data), axis=1)
-            if B_TEST_PHASE is True:
-                test_data['final_data'] = test_data.swifter.apply(lambda row: lemmatize_sentence(row.final_data), axis=1)
-
-        # ACCENTS REMOVAL
-        if B_REMOVE_ACCENTS:
-            print("Removing accents...")
-            train_data['final_data'] = train_data.swifter.progress_bar(False).apply(lambda row: remove_accents(row.final_data), axis=1)
-            dev_data['final_data'] = dev_data.swifter.progress_bar(False).apply(lambda row: remove_accents(row.final_data), axis=1)
-            if B_TEST_PHASE is True:
-                test_data['final_data'] = test_data.swifter.progress_bar(False).apply(lambda row: remove_accents(row.final_data), axis=1)
-
-        # STOPWORDS REMOVAL
-        if B_REMOVE_STOPWORDS:
-            print('Removing stopwords...')
-            train_data['final_data'] = train_data.swifter.progress_bar(False).apply(lambda row: remove_stopwords(row.final_data), axis=1)
-            dev_data['final_data'] = dev_data.swifter.progress_bar(False).apply(lambda row: remove_stopwords(row.final_data), axis=1)
-            if B_TEST_PHASE is True:
-                test_data['final_data'] = test_data.swifter.progress_bar(False).apply(lambda row: remove_stopwords(row.final_data), axis=1)
+            test_data['preprocessed'] = tweet_preprocessing.preprocess_data(test_data['content'], 'main')
 
         # FEATURE EXTRACTION
         print('Feature extraction...')
-        train_features, dev_features, test_features = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-
-        if B_FEAT_LENGTH:
-            train_features['tweet_length'] = extract_length_feature(train_data['content'])
-            dev_features['tweet_length'] = extract_length_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['tweet_length'] = extract_length_feature(test_data['content'])
-
-        if B_FEAT_UPPERCASE:
-            train_features['has_uppercase'] = extract_uppercase_feature(train_data['content'])
-            dev_features['has_uppercase'] = extract_uppercase_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['has_uppercase'] = extract_uppercase_feature(test_data['content'])
-
-        if B_FEAT_QUESTIONMARK:
-            train_features['question_mark'] = extract_question_mark_feature(train_data['content'])
-            dev_features['question_mark'] = extract_question_mark_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['question_mark'] = extract_question_mark_feature(test_data['content'])
-
-        if B_FEAT_EXCLAMARK:
-            train_features['exclamation_mark'] = extract_exclamation_mark_feature(train_data['content'])
-            dev_features['exclamation_mark'] = extract_exclamation_mark_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['exclamation_mark'] = extract_exclamation_mark_feature(test_data['content'])
-
-        if B_FEAT_LET_REP:
-            train_features['letter_repetition'] = extract_letter_repetition_feature(train_data['content'])
-            dev_features['letter_repetition'] = extract_letter_repetition_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['letter_repetition'] = extract_letter_repetition_feature(test_data['content'])
-
-        if B_FEAT_HASHTAGS:
-            train_features['hashtag_number'] = extract_hashtag_number_feature(train_data['content'])
-            dev_features['hashtag_number'] = extract_hashtag_number_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['hashtag_number'] = extract_hashtag_number_feature(test_data['content'])
-
-        if B_FEAT_LAUGHTER:
-            train_features['laughter_feature'] = extract_laughter_feature(train_data['content'])
-            dev_features['laughter_feature'] = extract_laughter_feature(dev_data['content'])
-            if B_TEST_PHASE:
-                test_features['laughter_feature'] = extract_laughter_feature(test_data['content'])
-
-        if B_FEAT_VOCABULARY:
-            train_features['pos_voc'], train_features['neg_voc'], train_features['neu_voc'], train_features['none_voc'] = \
-                extract_sent_words_feature(train_data['tokenized'], train_data['tokenized'], train_data['sentiment'],
-                                           lexicons=B_LEXICONS, discriminating_terms=B_DISCRIMINATING_TERMS,
-                                           discriminating_words=NUM_DISCRIMINATING_WORDS)
-            dev_features['pos_voc'], dev_features['neg_voc'], dev_features['neu_voc'], dev_features['none_voc'] = \
-                extract_sent_words_feature(dev_data['tokenized'], train_data['tokenized'], train_data['sentiment'],
-                                           lexicons=B_LEXICONS, discriminating_terms=B_DISCRIMINATING_TERMS,
-                                           discriminating_words=NUM_DISCRIMINATING_WORDS)
-            if B_TEST_PHASE:
-                test_features['pos_voc'], test_features['neg_voc'], test_features['neu_voc'], test_features['none_voc'] = \
-                    extract_sent_words_feature(test_data['tokenized'], train_data['tokenized'], train_data['sentiment'],
-                                               lexicons=B_LEXICONS, discriminating_terms=B_DISCRIMINATING_TERMS,
-                                               discriminating_words=NUM_DISCRIMINATING_WORDS)
+        train_features = feature_extraction.extract_features(train_data, train_data)
+        dev_features = feature_extraction.extract_features(dev_data, train_data)
+        test_features = feature_extraction.extract_features(test_data, train_data)
 
         # COUNT VECTORS
         if B_COUNTVECTORS:

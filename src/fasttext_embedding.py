@@ -1,13 +1,7 @@
 import fasttext
 from src import utils, config, data_fetching, tweet_preprocessing
 from src.config import *
-
-import swifter
-import hunspell
-import spacy
 import pandas as pd
-
-
 
 
 def predict_with_fasttext_model(model, data, label_dictionary):
@@ -27,17 +21,17 @@ if __name__ == '__main__':
 
     for S_DATASET in DATASET_ARRAY:
 
-        if bCommonCrawl:
-            PRETRAINED_VECTORS_PATH = './embeddings/cc.es.300.vec'
+        if B_COMMONCRAWL:
+            PRETRAINED_VECTORS_PATH = '../resources/embeddings/cc.es.300.vec'
             DIMENSION = 300
-        elif bWikipedia:
-            PRETRAINED_VECTORS_PATH = './embeddings/wiki.es.vec'
+        elif B_WIKIPEDIA:
+            PRETRAINED_VECTORS_PATH = '../resources/embeddings/wiki.es.vec'
             DIMENSION = 300
-        elif bWikipediaAligned:
-            PRETRAINED_VECTORS_PATH = './embeddings/wiki.es.align.vec'
+        elif B_WIKIPEDIA_ALIGNED:
+            PRETRAINED_VECTORS_PATH = '../resources/embeddings/wiki.es.align.vec'
             DIMENSION = 300
-        elif bINGEOTEC:
-            PRETRAINED_VECTORS_PATH = './embeddings/ingeotec_embeddings/es-{}-100d/es-{}-100d.vec' \
+        elif B_INGEOTEC:
+            PRETRAINED_VECTORS_PATH = '../resources/embeddings/ingeotec_embeddings/es-{}-100d/es-{}-100d.vec' \
                 .format('ES'.upper(), 'ES'.upper())
             DIMENSION = 100
 
@@ -47,25 +41,24 @@ if __name__ == '__main__':
         print('Fetching the data...')
         train_data, dev_data, test_data, label_dictionary = data_fetching.fetch_data(S_DATASET)
 
-        if bUpsampling:
+        if B_FT_UPSAMPLING:
             print('Upsampling the data...')
             train_data = tweet_preprocessing.perform_upsampling(train_data)
 
-        if bPreprocess:
-            train_data['content'] = tweet_preprocessing.preprocess(
-                train_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-                bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-                bUsername=PREP_USERNAME, bURL=PREP_URL)
-            dev_data['content'] = tweet_preprocessing.preprocess(
-                dev_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-                bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-                bUsername=PREP_USERNAME, bURL=PREP_URL)
-            test_data['content'] = tweet_preprocessing.preprocess(
-                test_data['content'], bAll=PREP_ALL, bEmoji=PREP_EMOJI, bHashtags=PREP_HASHTAGS, bLaughter=PREP_LAUGHTER,
-                bLetRep=PREP_LETREP, bLowercasing=PREP_LOWER, bNumber=PREP_NUMBER, bPunctuation=PREP_PUNCT, bXque=PREP_XQUE,
-                bUsername=PREP_USERNAME, bURL=PREP_URL)
+        train_data['content'] = tweet_preprocessing.preprocess(
+            train_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
+            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
+            username=PREP_USERNAME, url=PREP_URL)
+        dev_data['content'] = tweet_preprocessing.preprocess(
+            dev_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
+            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
+            username=PREP_USERNAME, url=PREP_URL)
+        test_data['content'] = tweet_preprocessing.preprocess(
+            test_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
+            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
+            username=PREP_USERNAME, url=PREP_URL)
 
-        if bTokenize:
+        if B_FT_TOKENIZE:
             print("Tokenizing...")
             train_data['content'] = train_data.swifter.progress_bar(False).apply(
                 lambda row: tweet_preprocessing.tokenize_sentence(row.content), axis=1)
@@ -74,7 +67,7 @@ if __name__ == '__main__':
             test_data['content'] = test_data.swifter.progress_bar(False).apply(
                     lambda row: tweet_preprocessing.tokenize_sentence(row.content), axis=1)
 
-        if bLibreOffice:
+        if B_FT_LIBREOFFICE:
             print("LibreOffice Processing... ")
             train_data['content'] = train_data.swifter.progress_bar(True).apply(
                 lambda row: tweet_preprocessing.libreoffice_processing(row.content), axis=1)
@@ -83,33 +76,27 @@ if __name__ == '__main__':
             test_data['content'] = test_data.swifter.apply(
                     lambda row: tweet_preprocessing.libreoffice_processing(row.content), axis=1)
 
-        if bLemmatize:
+        if B_FT_LEMMATIZE:
             print("Lemmatizing data...")
             train_data['content'] = train_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
             dev_data['content'] = dev_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
             test_data['content'] = test_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
 
-        if bTokenize:
+        if B_FT_TOKENIZE:
             train_data['content'] = [utils.untokenize_sentence(sentence) for sentence in train_data['content']]
             dev_data['content'] = [utils.untokenize_sentence(sentence) for sentence in dev_data['content']]
             test_data['content'] = [utils.untokenize_sentence(sentence) for sentence in test_data['content']]
 
-        if bStoreFiles:
-            utils.csv2ftx(train_data.content, train_data.sentiment, S_DATASET, 'train', 'ftx')
-            utils.csv2ftx(dev_data.content, dev_data.sentiment, S_DATASET, 'dev', 'ftx')
-            utils.csv2ftx(test_data.content, test_data.sentiment, S_DATASET, 'test', 'ftx')
+        utils.csv2ftx(train_data.content, train_data.sentiment, S_DATASET, 'train', 'ftx')
+        utils.csv2ftx(dev_data.content, dev_data.sentiment, S_DATASET, 'dev', 'ftx')
+        utils.csv2ftx(test_data.content, test_data.sentiment, S_DATASET, 'test', 'ftx')
 
-        if bTrainModel:
-            model = fasttext.train_supervised(input='./dataset/{}/intertass_{}_train.txt'.format(data_folder, S_DATASET),
-                                              pretrained_vectors=PRETRAINED_VECTORS_PATH,
-                                              lr=FT_LEARNING_RATE, epoch=FT_EPOCH, wordNgrams=FT_WORDGRAM, seed=1234,
-                                              dim=DIMENSION, verbose=5)
+        model = fasttext.train_supervised(input='../dataset/{}/intertass_{}_train.txt'.format('ftx', S_DATASET),
+                                          pretrained_vectors=PRETRAINED_VECTORS_PATH,
+                                          lr=FT_LEARNING_RATE, epoch=FT_EPOCH, wordNgrams=FT_WORDGRAM, seed=1234,
+                                          dim=DIMENSION, verbose=5)
 
-        if bSaveModel:
-            model.save_model(path='./fasttext/models/{}_{}'.format(S_DATASET, MODEL_NAME))
-
-        elif bLoadModel:
-            model = fasttext.load_model(path='./fasttext/models/{}_{}'.format(S_DATASET, MODEL_NAME))
+        model.save_model(path='../fasttext/models/{}_{}'.format(S_DATASET, FT_MODEL_NAME))
 
         print(len(model.words))
 
