@@ -3,6 +3,7 @@ import string
 import emoji
 import hunspell
 import nltk
+import numpy
 import spacy
 import pandas as pd
 from imblearn.over_sampling import RandomOverSampler
@@ -37,9 +38,8 @@ def preprocess_data(data, conf='main'):
             letrep=EMB_PREP_LETREP, lowercasing=EMB_PREP_LOWER, number=EMB_PREP_NUMBER, punctuation=EMB_PREP_PUNCT,
             xque=EMB_PREP_XQUE, username=EMB_PREP_USERNAME, url=EMB_PREP_URL)
     # TOKENIZE
-
     print("Tokenizing...")
-    data['final_data'] = data.swifter.progress_bar(False).apply(lambda row: tokenize_sentence(row.preprocessed), axis=1)
+    data['final_data'] = [tokenize_sentence(row) for row in data.preprocessed]
 
     # LIBREOFFICE CORRECTION
     if B_LIBREOFFICE:
@@ -60,6 +60,8 @@ def preprocess_data(data, conf='main'):
     if B_REMOVE_STOPWORDS:
         print('Removing stopwords...')
         data['final_data'] = data.swifter.progress_bar(False).apply(lambda row: remove_stopwords(row.final_data), axis=1)
+
+    data['final_data'] = [utils.untokenize_sentence(row) for row in data['final_data']]
 
     return data['final_data']
 
@@ -160,8 +162,8 @@ def tokenize_sentence(sentence):
 def perform_upsampling(dataframe):
     ros = RandomOverSampler(random_state=1234)
     x_resampled, y_resampled = ros.fit_resample(dataframe[['content']], dataframe['sentiment'])
-    df = pd.DataFrame(data=x_resampled[0:, 0:], columns=['content'])
-    df['content'] = x_resampled
+    df = pd.DataFrame()
+    df['content'] = x_resampled['content']
     df['sentiment'] = y_resampled
     df = df.sample(frac=1).reset_index(drop=True)
     return df

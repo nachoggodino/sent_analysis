@@ -11,6 +11,10 @@ from src.config import *
 def fetch_data(dataset):
     if dataset == 'tass2019':
         return read_tass2019_files()
+    elif dataset == 'general':
+        return read_general_files()
+    elif dataset == 'politics':
+        return read_politics_files()
     elif dataset == 'coah':
         return read_coah_files()
 
@@ -99,6 +103,36 @@ def get_dataframe_from_tass2019(data, encode_label=True):
     return result_df
 
 
+def get_dataframe_from_general(data):
+    content, sentiment = [], []
+    for tweet in data.iter('tweet'):
+        for element in tweet.iter():
+            if element.tag == 'content':
+                content.append(element.text)
+            elif element.tag == 'value':
+                if element.text == 'N':
+                    sentiment.append('0')
+                    break
+                elif element.text == 'NEU':
+                    sentiment.append('1')
+                    break
+                elif element.text == 'NONE':
+                    sentiment.append('2')
+                    break
+                elif element.text == 'P':
+                    sentiment.append('3')
+                    break
+                else:
+                    print('Ojo...')
+
+    result_df = pd.DataFrame()
+    print(len(content))
+    print(len(sentiment))
+    result_df['content'] = content
+    result_df['sentiment'] = sentiment
+    return result_df
+
+
 def get_dataframe_from_ftx_format(lang, folder, set='', train_plus_dev=False):
     result = pd.DataFrame()
     sets = list()
@@ -130,36 +164,71 @@ def read_tass2019_files():
     test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
 
     if B_REDUCED:
-        train_data['sentiment'] = train_data['sentiment'].transform(lambda x: reduce_labels('tass2019', x))
-        dev_data['sentiment'] = dev_data['sentiment'].transform(lambda x: reduce_labels('tass2019', x))
-        test_data['sentiment'] = test_data['sentiment'].transform(lambda x: reduce_labels('tass2019', x))
-    return train_data, dev_data, test_data, train_data['sentiment'].unique()
+        train_data['sentiment'] = train_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+        dev_data['sentiment'] = dev_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+        test_data['sentiment'] = test_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+
+    label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
+    return train_data, dev_data, test_data, label_dictionary
 
 
 def read_coah_files():
     name = 'coah'
     coah_data = pd.read_csv('../dataset/csv/{}/{}.csv'.format(name, name), encoding='utf-8', sep='\t')
-    label_dict = coah_data['sentiment'].unique()
 
     if B_REDUCED:
         coah_data['sentiment'] = coah_data['sentiment'].transform(lambda x: reduce_labels(name, x))
     train_data, dev_data, test_data = dataframe_split(coah_data)
-    return train_data, dev_data, test_data, train_data['sentiment'].unique()
+    return train_data, dev_data, test_data, map(str, train_data['sentiment'].unique())
+
+
+def read_general_files():
+    name = 'general'
+    train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
+    test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
+
+    if B_REDUCED:
+        train_data['sentiment'] = train_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+        test_data['sentiment'] = test_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+
+    train_data, dev_data = dataframe_split(train_data, just_train=True)
+    label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
+    return train_data, dev_data, test_data, label_dictionary
+
+
+def read_politics_files():
+    name = 'politics'
+    train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format('general', 'general'), encoding='utf-8', sep='\t')
+    test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
+
+    if B_REDUCED:
+        train_data['sentiment'] = train_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+        test_data['sentiment'] = test_data['sentiment'].transform(lambda x: reduce_labels(name, x))
+
+    train_data, dev_data = dataframe_split(train_data, just_train=True)
+    label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
+    return train_data, dev_data, test_data, label_dictionary
 
 
 def reduce_labels(dataset, x):
-    if dataset == 'tass2019':
+    if dataset == 'tass2019' or 'general' or 'politics':
         return x - 1 if x > 1 else x
     elif dataset == 'coah':
         return 0 if x < 3 else (1 if x == 3 else 2)
 
 
-def dataframe_split(dataframe):
+def dataframe_split(dataframe, just_train=False):
     numpy.random.seed(SHUFFLE_SEED)
-    train, dev, test = numpy.split(dataframe.sample(frac=1),
-                       [int(SPLIT_SEP_1*len(dataframe)), int(SPLIT_SEP_2*len(dataframe))])
-    return train.reset_index(drop=True), dev.reset_index(drop=True), test.reset_index(drop=True)
+    if just_train:
+        train, dev = numpy.split(dataframe.sample(frac=1), [int(SPLIT_SEP_2*len(dataframe))])
+        return train.reset_index(drop=True), dev.reset_index(drop=True)
+    else:
+        train, dev, test = numpy.split(dataframe.sample(frac=1),
+                                   [int(SPLIT_SEP_1*len(dataframe)), int(SPLIT_SEP_2*len(dataframe))])
+        return train.reset_index(drop=True), dev.reset_index(drop=True), test.reset_index(drop=True)
 
 
 if __name__ == '__main__':
-    print(get_dataframe_from_spamore(parse_xml('../dataset/corpus/corpus_spamore.xml')))
+    df = get_dataframe_from_general(parse_xml('../dataset/corpus/tass2013/politics-test-tagged.xml'))
+
+    df.to_csv(path_or_buf='../dataset/csv/politics/politics_test.csv', encoding='utf-8', sep='\t', index=False)

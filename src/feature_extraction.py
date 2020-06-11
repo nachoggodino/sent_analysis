@@ -2,6 +2,7 @@ import re
 import pandas as pd
 from textacy import keyterms
 from src.config import *
+from src import tweet_preprocessing
 
 regex_uppercase = re.compile(r"\b[A-Z][A-Z]+\b")  # TODO
 
@@ -30,8 +31,10 @@ def extract_features(data, feed):
         features['laughter_feature'] = extract_laughter_feature(data['content'])
 
     if B_FEAT_VOCABULARY:
+        tokenized_data = [tweet_preprocessing.tokenize_sentence(sentence) for sentence in data['content']]
+        tokenized_feed = [tweet_preprocessing.tokenize_sentence(sentence) for sentence in feed['content']]
         features['pos_voc'], features['neg_voc'], features['neu_voc'], features['none_voc'] = \
-            extract_sent_words_feature(data['tokenized'], feed['tokenized'], data['sentiment'],
+            extract_sent_words_feature(tokenized_data, tokenized_feed, feed['sentiment'],
                                        lexicons=B_LEXICONS, discriminating_terms=B_DISCRIMINATING_TERMS,
                                        discriminating_words=NUM_DISCRIMINATING_WORDS)
     return features
@@ -104,8 +107,8 @@ def get_sentiment_vocabulary(data, sentiment_feed, positive, negative, lexicons,
     positive_vocabulary, negative_vocabulary = keyterms.most_discriminating_terms(
         pos_neg_tweets, pos_neg_bool_labels, top_n_terms=discriminating_words)
 
-    pos_df = pd.read_csv('./lexicons/isol/positivas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
-    neg_df = pd.read_csv('./lexicons/isol/negativas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
+    pos_df = pd.read_csv('../resources/lexicons/isol/positivas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
+    neg_df = pd.read_csv('../resources/lexicons/isol/negativas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
 
     positive_result, negative_result = set(), set()
     if lexicons:

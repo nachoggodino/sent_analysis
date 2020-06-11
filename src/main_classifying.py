@@ -50,7 +50,7 @@ def perform_tf_idf_vectors(train_set, dev_set):
 def train_model(classifier, x_train, y_train, x_test, y_test, reduced=False, description=''):
     if reduced:
         threshold = 1 if y_train.value_counts()[1] > y_train.value_counts()[2] else 0
-        print("Ternary mode selected. NEU and NONE will be both treated as NEU" if threshold is 1 else
+        print("Ternary mode selected. NEU and NONE will be both treated as NEU" if threshold == 1 else
               "Ternary mode selected. NEU and NONE will be both treated as NONE")
         y_train = [label - 1 if label > 1 else label for label in y_train]
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
         # BERT
         print("BERT MODEL")
-        bert_path = '{}/{}'.format(BERT_MODEL_PATH, BERT_MODEL_NAME)
+        bert_path = '{}/{}/{}/best-model.pt'.format(BERT_MODEL_PATH, BERT_MODEL_NAME, S_DATASET)
         bert_model = TextClassifier.load(bert_path)
         dev_bert_probabilities, dev_bert_predictions = bert_embeddings.predict_with_bert_model(
             bert_model, dev_data.content, label_dictionary)

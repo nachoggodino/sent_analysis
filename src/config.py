@@ -18,8 +18,8 @@ sgd = SGDClassifier()
 B_TEST_PHASE = True  # If true, the test set is used.
 
 # DATA FETCH
-B_REDUCED = True  # If true, NEU and NONE are treated as one category. DO NOT USE
-B_TRAIN_PLUS_DEV = True  # If true, the train and dev sets are merged
+B_REDUCED = False  # If true, NEU and NONE are treated as one category. DO NOT USE
+B_TRAIN_PLUS_DEV = False  # If true, the train and dev sets are merged
 DATASET_ARRAY = ['tass2019']
 SHUFFLE_SEED = 1234
 SPLIT_SEP_1 = 0.7
@@ -68,13 +68,13 @@ EMB_PREP_EMOJI = False
 EMB_PREP_HASHTAGS = False
 EMB_PREP_USERNAME = False
 EMB_PREP_URL = False
-EMB_PREP_PUNCT = False
+EMB_PREP_PUNCT = True
 EMB_PREP_NUMBER = False
-EMB_PREP_LOWER = False
+EMB_PREP_LOWER = True
 EMB_PREP_LAUGHTER = False
 EMB_PREP_LETREP = False
 EMB_PREP_XQUE = False
-EMB_PREP_ALL = True
+EMB_PREP_ALL = False
 
 B_STORE_PREPROCESSED = False
 PREP_FILE_NAME = 'allPrep'
@@ -90,7 +90,7 @@ B_FEAT_UPPERCASE = True
 B_FEAT_LAUGHTER = True
 
 # TODO                                      FASTTEXT
-FT_MODEL_PATH = './fasttext/models'
+FT_MODEL_PATH = '../fasttext/models'
 FT_MODEL_NAME = 'june_test1'
 
 FT_LEARNING_RATE = 0.05
@@ -103,18 +103,16 @@ B_WIKIPEDIA_ALIGNED = False
 B_COMMONCRAWL = False
 B_INGEOTEC = True
 
-B_FT_LIBREOFFICE = False
-B_FT_LEMMATIZE = False
-B_FT_TOKENIZE = False
-B_FT_UPSAMPLING = False
-
 # TODO                                      BERT
-BERT_MODEL_PATH = './bert/models'
-BERT_MODEL_NAME = 'cross_for_TFG'
+BERT_MODEL_PATH = '../bert/beto/models'
+BERT_MODEL_NAME = 'june_test1'
 
-bStoreFiles = True
-
-B_BERT_LIBREOFFICE = False
-B_BERT_LEMMATIZE = False
-B_BERT_TOKENIZE = False
-B_BERT_UPSAMPLING = True
+# TODO                                      DEMO
+B_DEMO = False
+DEMO_TEXTS = tweets_to_test = ['La radio de cercanía, la radio más cercana a la realidad en @HablarporHablar con esta llamada',  # 2
+                  'Buenos dias, vamos a hacer algunos recados y a empezar el dia con energia!!',  # 3
+                  '@mireiaescribano justo cuando se terminan las fiestas de verano, me viene genial',  # 3
+                  'No sabes cuantas horas, minutos y segundos espero para volver a ver esa sonrisa que tanto me gusta ver salir de ti',  # 0
+                  '@cinthiaszc jajajaja me vas a decir a mi mi abuela cocina tan rico que mando al tacho la dieta :v',  # 0
+                  '@JuanPaUrrego ¡Que lindo eres que lindo actúas!! te adoroVen a Perú pls'  # 3
+                  ]

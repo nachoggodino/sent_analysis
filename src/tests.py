@@ -1,41 +1,30 @@
-from gensim.models import KeyedVectors
-import pandas as pd
-import utils
-from sklearn import svm, preprocessing, linear_model
-import os
-import re
-import string
-import hunspell
+
+import vaderSentiment.vaderSentiment
+from src.config import *
 import fasttext
-import flair
-from flair.embeddings import WordEmbeddings, FlairEmbeddings, DocumentRNNEmbeddings
-from flair.models import TextClassifier
-from flair.trainers import ModelTrainer
-from flair.data import Corpus
-from flair.datasets import ColumnCorpus
-from flair.data import Sentence
-from tweet_preprocessing import preprocess
-
-from pathlib import Path
-
-# from wikipedia2vec import Wikipedia2Vec
-
-# Wikipedia2Vec.load('./embeddings/eswiki_20180420_300d.pkl')
-
-sLang = 'es'
-train_data, dev_data, test_data = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-for lang in ['es', 'cr', 'mx', 'pe', 'uy']:
-    train, dev, test, _ = utils.read_files(lang)
-    if lang == sLang:
-        dev_data = dev
-        test_data = test
-    else:
-        train_data = pd.concat([train_data, train], ignore_index=True).reset_index(drop=True)
-
-print(train_data)
-print(dev_data)
-print(test_data)
+from src import fasttext_embedding, tweet_preprocessing
 
 
+tweets_to_test = ['La radio de cercanía, la radio más cercana a la realidad en @HablarporHablar con esta llamada',  # 2
+                  'Buenos dias, vamos a hacer algunos recados y a empezar el dia con energia!!',  # 3
+                  '@mireiaescribano justo cuando se terminan las fiestas de verano, me viene genial',  # 3
+                  'No sabes cuantas horas, minutos y segundos espero para volver a ver esa sonrisa que tanto me gusta ver salir de ti',  # 0
+                  '@cinthiaszc jajajaja me vas a decir a mi mi abuela cocina tan rico que mando al tacho la dieta :v',  # 0
+                  '@JuanPaUrrego ¡Que lindo eres que lindo actúas!! te adoroVen a Perú pls'  # 3
+                  ]
+label_dictionary = ['0', '1', '2', '3']
 
+fasttext_path = '../fasttext/models/{}_{}'.format('tass2019', FT_MODEL_NAME)
+fasttext_model = fasttext.load_model(path=fasttext_path)
+dev_fasttext_probabilities, dev_fasttext_predictions = fasttext_embedding.predict_with_fasttext_model(
+    fasttext_model, tweets_to_test, label_dictionary)
+print(dev_fasttext_probabilities)
+print(dev_fasttext_predictions)
+
+# sentences = ['horrible']
+#
+# analyzer = vaderSentiment.vaderSentiment.SentimentIntensityAnalyzer()
+# for sentence in sentences:
+#     vs = analyzer.polarity_scores(sentence)
+#     print("{:-<65} {}".format(sentence, str(vs)))
 

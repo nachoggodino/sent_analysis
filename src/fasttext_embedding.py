@@ -8,7 +8,7 @@ def predict_with_fasttext_model(model, data, label_dictionary):
     probabilities_list = list()
     for text in data:
         row_prob = dict()
-        result = model.predict(text, k=len(label_dictionary))
+        result = model.predict(text, k=len(list(label_dictionary)))
         for label, prob in zip(result[0], result[1]):
             row_prob.update({label[-1]: prob})
         probabilities_list.append(row_prob)
@@ -41,55 +41,20 @@ if __name__ == '__main__':
         print('Fetching the data...')
         train_data, dev_data, test_data, label_dictionary = data_fetching.fetch_data(S_DATASET)
 
-        if B_FT_UPSAMPLING:
-            print('Upsampling the data...')
+        if B_UPSAMPLING:
+            print('Performing upsampling...')
             train_data = tweet_preprocessing.perform_upsampling(train_data)
 
-        train_data['content'] = tweet_preprocessing.preprocess(
-            train_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
-            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
-            username=PREP_USERNAME, url=PREP_URL)
-        dev_data['content'] = tweet_preprocessing.preprocess(
-            dev_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
-            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
-            username=PREP_USERNAME, url=PREP_URL)
-        test_data['content'] = tweet_preprocessing.preprocess(
-            test_data['content'], all_prep=PREP_ALL, emojis=PREP_EMOJI, hashtags=PREP_HASHTAGS, laughter=PREP_LAUGHTER,
-            letrep=PREP_LETREP, lowercasing=PREP_LOWER, number=PREP_NUMBER, punctuation=PREP_PUNCT, xque=PREP_XQUE,
-            username=PREP_USERNAME, url=PREP_URL)
+        # PRE-PROCESSING
+        print('Data preprocessing...')
+        train_data['preprocessed'] = tweet_preprocessing.preprocess_data(train_data['content'], 'embedding')
+        dev_data['preprocessed'] = tweet_preprocessing.preprocess_data(dev_data['content'], 'embedding')
+        if B_TEST_PHASE is True:
+            test_data['preprocessed'] = tweet_preprocessing.preprocess_data(test_data['content'], 'embedding')
 
-        if B_FT_TOKENIZE:
-            print("Tokenizing...")
-            train_data['content'] = train_data.swifter.progress_bar(False).apply(
-                lambda row: tweet_preprocessing.tokenize_sentence(row.content), axis=1)
-            dev_data['content'] = dev_data.swifter.progress_bar(False).apply(
-                lambda row: tweet_preprocessing.tokenize_sentence(row.content), axis=1)
-            test_data['content'] = test_data.swifter.progress_bar(False).apply(
-                    lambda row: tweet_preprocessing.tokenize_sentence(row.content), axis=1)
-
-        if B_FT_LIBREOFFICE:
-            print("LibreOffice Processing... ")
-            train_data['content'] = train_data.swifter.progress_bar(True).apply(
-                lambda row: tweet_preprocessing.libreoffice_processing(row.content), axis=1)
-            dev_data['content'] = dev_data.swifter.apply(
-                lambda row: tweet_preprocessing.libreoffice_processing(row.content), axis=1)
-            test_data['content'] = test_data.swifter.apply(
-                    lambda row: tweet_preprocessing.libreoffice_processing(row.content), axis=1)
-
-        if B_FT_LEMMATIZE:
-            print("Lemmatizing data...")
-            train_data['content'] = train_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
-            dev_data['content'] = dev_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
-            test_data['content'] = test_data.swifter.apply(lambda row: tweet_preprocessing.lemmatize_sentence(row.content), axis=1)
-
-        if B_FT_TOKENIZE:
-            train_data['content'] = [utils.untokenize_sentence(sentence) for sentence in train_data['content']]
-            dev_data['content'] = [utils.untokenize_sentence(sentence) for sentence in dev_data['content']]
-            test_data['content'] = [utils.untokenize_sentence(sentence) for sentence in test_data['content']]
-
-        utils.csv2ftx(train_data.content, train_data.sentiment, S_DATASET, 'train', 'ftx')
-        utils.csv2ftx(dev_data.content, dev_data.sentiment, S_DATASET, 'dev', 'ftx')
-        utils.csv2ftx(test_data.content, test_data.sentiment, S_DATASET, 'test', 'ftx')
+        utils.csv2ftx(train_data.preprocessed, train_data.sentiment, S_DATASET, 'train', 'ftx')
+        utils.csv2ftx(dev_data.preprocessed, dev_data.sentiment, S_DATASET, 'dev', 'ftx')
+        utils.csv2ftx(test_data.preprocessed, test_data.sentiment, S_DATASET, 'test', 'ftx')
 
         model = fasttext.train_supervised(input='../dataset/{}/intertass_{}_train.txt'.format('ftx', S_DATASET),
                                           pretrained_vectors=PRETRAINED_VECTORS_PATH,
