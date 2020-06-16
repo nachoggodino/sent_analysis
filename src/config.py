@@ -48,8 +48,12 @@ B_TFIDF = False  # If true, tf-idf vectors are performed
 B_CLASSIC_BOW = False  # If true, B_COUNTVECTORS must also be true
 
 # CLASSIFIERS
-CLASSIFIERS_ARRAY = [lr]  # , nb, ada, gb]
-CLASSIFIERS_NAMES = ['LR']  # , 'NB', 'ADA', 'GB']
+CLASSIFIER = lr  # , nb, ada, gb]
+S_CLASSIFIER_NAME = 'LR'  # , 'NB', 'ADA', 'GB']
+
+# RESULTS
+CONFUSION_MATRIX = False
+PREC_AND_RECALL = False
 
 # TODO                                      PREPROCESSING
 PREP_EMOJI = False

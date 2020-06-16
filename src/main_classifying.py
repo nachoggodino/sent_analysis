@@ -47,42 +47,11 @@ def perform_tf_idf_vectors(train_set, dev_set):
     return tfidf_vect.transform(train), tfidf_vect.transform(dev)
 
 
-def train_model(classifier, x_train, y_train, x_test, y_test, reduced=False, description=''):
-    if reduced:
-        threshold = 1 if y_train.value_counts()[1] > y_train.value_counts()[2] else 0
-        print("Ternary mode selected. NEU and NONE will be both treated as NEU" if threshold == 1 else
-              "Ternary mode selected. NEU and NONE will be both treated as NONE")
-        y_train = [label - 1 if label > 1 else label for label in y_train]
-
-    classifier.fit(x_train, y_train)
-    predictions, probabilities = get_predictions(classifier, x_test)
-
-    if reduced:
-        predictions = [pred+1 if pred > threshold else pred for pred in predictions]
-
-    score = None
-    if y_test is not None:
-        score = utils.print_confusion_matrix(predictions, y_test)
-    return classifier, predictions, probabilities, score
-
-
-def get_predictions(trained_classifier, feature_test_vector, is_vso=False):
-    if is_vso:
-        return trained_classifier.predict(feature_test_vector), trained_classifier.decision_function(feature_test_vector)
-    else:
-        return trained_classifier.predict(feature_test_vector), trained_classifier.predict_proba(feature_test_vector)
-
-
-def get_model_accuracy(predictions, validation_labels):
-    return metrics.accuracy_score(predictions, validation_labels)
-
-
 if __name__ == '__main__':
 
     for S_DATASET in DATASET_ARRAY:
 
-        print('################    DATASET: {}    ###############################'.format(S_DATASET))
-        print()
+        utils.print_separator('DATASET: {}'.format(S_DATASET))
 
         print('Fetching the data...')
         train_data, dev_data, test_data, label_dictionary = data_fetching.fetch_data(S_DATASET)
@@ -130,84 +99,70 @@ if __name__ == '__main__':
             test_set = test_features if B_FEATURES else (test_count_vectors if B_COUNTVECTORS else test_tfidf)
             test_labels = test_data['sentiment']
 
-        all_probabilities = []
-        all_valid_probabilities = []
-        all_test_probabilities = []
+        utils.print_separator("CLASSIC MODEL:  {} ".format(set_name))
+        clf = CLASSIFIER
+        print("Classifier: " + S_CLASSIFIER_NAME)
+        clf.fit(training_set, training_labels)
+        print("Development set:")
+        dev_feat_predictions = clf.predict(dev_set)
+        dev_feat_probabilities = clf.predict_proba(dev_set)
+        utils.print_f1_score(dev_feat_predictions, dev_labels)
+        if B_TEST_PHASE:
+            print("Test set:")
+            test_feat_predictions = clf.predict(test_set)
+            test_feat_probabilities = clf.predict_proba(test_set)
+            utils.print_f1_score(test_feat_predictions, test_labels)
 
-        print("MODEL:  {} ".format(set_name))
-        mini, mini_test, mini_valid = [], [], []
-        for j, clf in enumerate(CLASSIFIERS_ARRAY):
-
-            if B_ONE_VS_REST:
-                clf = OneVsRestClassifier(clf)
-            print("Classifier: " + CLASSIFIERS_NAMES[j])
-            print()
-
-            print("Development set:")
-            classif, preds, probs, train_score = train_model(
-                clf, training_set, training_labels, dev_set, dev_labels, reduced=B_REDUCED)
-
-            if B_TEST_PHASE:
-                print("Test set:")
-                test_preds, test_probs = get_predictions(classif, test_set)
-                mini_test.append(test_probs)
-
-            mini.append(probs)
-
-        all_probabilities.append(mini)
-        all_test_probabilities.append(mini_test)
-        all_valid_probabilities.append(mini_valid)
-
-        print("FASTTEXT MODEL")
+        utils.print_separator("FASTTEXT MODEL")
         fasttext_path = '{}/{}_{}'.format(FT_MODEL_PATH, S_DATASET, FT_MODEL_NAME)
         fasttext_model = fasttext.load_model(path=fasttext_path)
         dev_fasttext_probabilities, dev_fasttext_predictions = fasttext_embedding.predict_with_fasttext_model(
             fasttext_model, dev_data.content, label_dictionary)
-        utils.print_confusion_matrix(dev_fasttext_predictions, dev_labels)
+        print("Development set:")
+        utils.print_f1_score(dev_fasttext_predictions, dev_labels)
         test_fasttext_probabilities, test_fasttext_predictions = fasttext_embedding.predict_with_fasttext_model(
             fasttext_model, test_data.content, label_dictionary)
-        utils.print_confusion_matrix(test_fasttext_predictions, test_labels)
+        print("Test set:")
+        utils.print_f1_score(test_fasttext_predictions, test_labels)
 
         # BERT
-        print("BERT MODEL")
+        utils.print_separator("BERT MODEL")
         bert_path = '{}/{}/{}/best-model.pt'.format(BERT_MODEL_PATH, BERT_MODEL_NAME, S_DATASET)
         bert_model = TextClassifier.load(bert_path)
         dev_bert_probabilities, dev_bert_predictions = bert_embeddings.predict_with_bert_model(
             bert_model, dev_data.content, label_dictionary)
-        utils.print_confusion_matrix(dev_bert_predictions, dev_labels)
+        print("Development set:")
+        utils.print_f1_score(dev_bert_predictions, dev_labels)
         test_bert_probabilities, test_bert_predictions = bert_embeddings.predict_with_bert_model(
             bert_model, test_data.content, label_dictionary)
-        utils.print_confusion_matrix(test_bert_predictions, test_labels)
+        print("Test set:")
+        utils.print_f1_score(test_bert_predictions, test_labels)
 
-        print('-------------- FINAL ENSEMBLE --------------')
-        print()
-
-        print('From Normal Models:')
-        print()
+        utils.print_separator('FINAL ENSEMBLE')
 
         selected_classifier = 0  # See all the classifiers available above.
         probabilities_for_voting_ensemble_dev = [
-            all_probabilities[0][selected_classifier],
+            dev_feat_probabilities,
             dev_fasttext_probabilities,
             dev_bert_probabilities
         ]
 
         if B_TEST_PHASE:
             probabilities_for_voting_ensemble_test = [
-                all_test_probabilities[0][selected_classifier],
+                test_feat_probabilities,
                 test_fasttext_probabilities,
                 test_bert_probabilities
             ]
 
-        print(test_labels.size)
-        utils.print_confusion_matrix(
+        print("Development set:")
+        utils.print_f1_score(
             utils.get_averaged_predictions(probabilities_for_voting_ensemble_dev, len(dev_labels), label_dictionary),
             dev_labels)
         if B_TEST_PHASE:
-            utils.print_confusion_matrix(
+            print("Test set:")
+            utils.print_f1_score(
                 utils.get_averaged_predictions(probabilities_for_voting_ensemble_test, len(test_labels), label_dictionary),
                 test_labels)
-        print()
 
         print()
         print('--------------- NEXT DATASET ------------------')

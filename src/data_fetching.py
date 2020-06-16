@@ -8,7 +8,7 @@ from sklearn import preprocessing
 from src.config import *
 
 
-def fetch_data(dataset):
+def fetch_data(dataset, train_with_all=False):
     if dataset == 'tass2019':
         return read_tass2019_files()
     elif dataset == 'general':

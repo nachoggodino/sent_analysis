@@ -4,6 +4,7 @@ from flair.models import TextClassifier
 from flair.data import Sentence
 from flair.trainers import ModelTrainer
 from flair.embeddings import BertEmbeddings
+from sklearn.utils.class_weight import compute_class_weight
 import pandas as pd
 
 from src import utils, data_fetching, tweet_preprocessing
@@ -47,29 +48,39 @@ if __name__ == '__main__':
         utils.csv2ftx(dev_data.content, dev_data.sentiment, S_DATASET, 'dev', 'flair')
         utils.csv2ftx(test_data.content, test_data.sentiment, S_DATASET, 'test', 'flair')
 
-        corpus = Corpus = ClassificationCorpus('../dataset/flair/', train_file='intertass_{}_train.txt'.format(S_DATASET),
+        corpus = Corpus = ClassificationCorpus('../dataset/flair/',
+                                               train_file='intertass_{}_train.txt'.format(S_DATASET),
                                                dev_file='intertass_{}_dev.txt'.format(S_DATASET),
                                                test_file='intertass_{}_test.txt'.format(S_DATASET))
+
+        class_weights = compute_class_weight('balanced', [0, 1, 2, 3], y=train_data.sentiment)
+        dict_weights = dict()
+        for i, label in enumerate(class_weights):
+            dict_weights.update({str(label): class_weights[i]})
 
         # word_embeddings = [BertEmbeddings('bert-base-multilingual-cased')]
         word_embeddings = [BertEmbeddings('dccuchile/bert-base-spanish-wwm-cased')]
 
-        document_embeddings = DocumentRNNEmbeddings(word_embeddings, hidden_size=512, reproject_words=True, rnn_type='LSTM',
-                                                    reproject_words_dimension=256, dropout=0.35, rnn_layers=2)
-        classifier = TextClassifier(document_embeddings, label_dictionary=corpus.make_label_dictionary(), multi_label=False)
+        document_embeddings = DocumentRNNEmbeddings(word_embeddings, hidden_size=512, reproject_words=True,
+                                                    rnn_type='LSTM', reproject_words_dimension=256, dropout=0.35,
+                                                    rnn_layers=2)
+        classifier = TextClassifier(document_embeddings, label_dictionary=corpus.make_label_dictionary(),
+                                    loss_weights=dict_weights, multi_label=False)
+
         trainer = ModelTrainer(classifier, corpus)
-        trainer.train('../bert/beto/models/{}/{}/'.format(BERT_MODEL_NAME, S_DATASET), max_epochs=20, mini_batch_size=32, anneal_factor=0.5,
-                      train_with_dev=B_TRAIN_PLUS_DEV, learning_rate=0.05, patience=1)
+        trainer.train('../bert/beto/models/{}/{}/'.format(BERT_MODEL_NAME, S_DATASET), max_epochs=20,
+                      mini_batch_size=32, anneal_factor=0.5, train_with_dev=B_TRAIN_PLUS_DEV, learning_rate=0.05,
+                      patience=1)
 
         best_model = TextClassifier.load('../bert/beto/models/{}/{}/best-model.pt'.format(BERT_MODEL_NAME, S_DATASET))
 
         print('------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      DEV')
         _, dev_predictions = predict_with_bert_model(best_model, dev_data.content, label_dictionary)
-        utils.print_confusion_matrix(dev_predictions, utils.encode_label(dev_data['sentiment']))
+        utils.print_f1_score(dev_predictions, utils.encode_label(dev_data['sentiment']))
 
         print('------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      TEST')
         _, test_predictions = predict_with_bert_model(best_model, test_data.content, label_dictionary)
-        utils.print_confusion_matrix(test_predictions, utils.encode_label(test_data['sentiment']))
+        utils.print_f1_score(test_predictions, utils.encode_label(test_data['sentiment']))
 
         print('-------------------------------------------------------------------------------------------------------')
         print('-------------------------------------------------------------------------------------------------------')

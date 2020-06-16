@@ -4,6 +4,7 @@ import pandas
 from sklearn import preprocessing
 
 from src import data_fetching
+from src.config import *
 
 import pandas as pd
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
@@ -25,20 +26,18 @@ def encode_label(list_of_labels):
     return encoder.fit_transform(list_of_labels)
 
 
-def print_confusion_matrix(predictions, labels, print_confusion_matrix=False, print_prec_and_rec=False):
+def print_f1_score(predictions, labels, confusion_matrix=CONFUSION_MATRIX, prec_and_rec=PREC_AND_RECALL):
     preds = pd.Series(map(int, predictions), name='Predicted')
     labs = pd.Series(map(int, labels), name='Actual')
-    df_confusion = pd.crosstab(labs, preds)
-    if print_confusion_matrix:
-        print(df_confusion)
-    prec = precision_score(labs, preds, average='macro')
-    rec = recall_score(labs, preds, average='macro')
-    score = 2*(prec*rec)/(prec+rec)
+    if confusion_matrix:
+        print(pd.crosstab(labs, preds))
+    precision = precision_score(labs, preds, average='macro')
+    recall = recall_score(labs, preds, average='macro')
+    score = f1_score(labs, preds, average='macro')  # 2*(precision*recall)/(precision+recall)
     print("F1-SCORE: " + str(score))
-    if print_prec_and_rec:
-        print("Recall: " + str(rec))
-        print("Precision: " + str(prec))
-    print()
+    if prec_and_rec:
+        print("Recall: " + str(recall))
+        print("Precision: " + str(precision))
     return score
 
 
@@ -65,6 +64,14 @@ def csv2ftx(data, labels, sLang, sPhase, folder, filename_ending=''):
     result['content'] = data
     result.to_csv('../dataset/{}/intertass_{}_{}{}.txt'.format(folder, sLang, sPhase, filename_ending), header=None, index=None, sep=' ')
     return
+
+
+def print_separator(string_for_printing):
+    print()
+    print('//////////////////////////////////////////////////////////////////////////////////////////////////////////')
+    print("////                                    " + string_for_printing)
+    print('//////////////////////////////////////////////////////////////////////////////////////////////////////////')
+    print()
 
 
 if __name__ == '__main__':

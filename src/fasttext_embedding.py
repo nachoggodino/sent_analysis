@@ -67,9 +67,9 @@ if __name__ == '__main__':
 
         predictions = [int(model.predict(tweet)[0][0][-1]) for tweet in dev_data['content']]
         print('DEV')
-        utils.print_confusion_matrix(predictions, dev_data.sentiment)
+        utils.print_f1_score(predictions, dev_data.sentiment)
         predictions = [int(model.predict(tweet)[0][0][-1]) for tweet in test_data['content']]
         print('TEST')
-        utils.print_confusion_matrix(predictions, test_data.sentiment)
+        utils.print_f1_score(predictions, test_data.sentiment)
 
         print('-----------------------------------NEXT---------------------------------------------------')
