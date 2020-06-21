@@ -1,28 +1,52 @@
 import re
 import xml.etree.ElementTree as ET
+from lxml import etree
 
 import numpy
+import pandas
 import pandas as pd
 from sklearn import preprocessing
 
 from src.config import *
 
 
-def fetch_data(dataset, train_with_all=False):
-    if dataset == 'tass2019':
-        return read_tass2019_files()
+def fetch_data(dataset, train_with_all=B_TRAIN_WITH_ALL):
+    if dataset == 'intertass':
+        train_data, dev_data, test_data, label_dictionary = read_intertass_files()
     elif dataset == 'general':
-        return read_general_files()
+        train_data, dev_data, test_data, label_dictionary = read_general_files()
     elif dataset == 'politics':
-        return read_politics_files()
+        train_data, dev_data, test_data, label_dictionary = read_politics_files()
+    elif dataset == 'socialtv':
+        train_data, dev_data, test_data, label_dictionary = read_socialtv_files()
+    elif dataset == 'stompol':
+        train_data, dev_data, test_data, label_dictionary = read_stompol_files()
     elif dataset == 'coah':
-        return read_coah_files()
+        train_data, dev_data, test_data, label_dictionary = read_coah_files()
+    else:
+        train_data, dev_data, test_data, label_dictionary = 0, 0, 0, 0
+
+    if train_with_all:
+        train_data = fetch_all_training_data()
+    return train_data, dev_data, test_data, label_dictionary
 
 
-def parse_xml(filepath):
-    parser = ET.XMLParser(encoding='UTF-8')
-    tree = ET.parse(filepath, parser=parser)
-    return tree
+def fetch_all_training_data():
+    result = read_intertass_files(just_train=True)
+    # result = pandas.concat([result, read_coah_files(just_train=True)], ignore_index=True).reset_index(drop=True)
+    result = pandas.concat([result, read_politics_files(just_train=True)], ignore_index=True).reset_index(drop=True)
+    result = pandas.concat([result, read_general_files(just_train=True)], ignore_index=True).reset_index(drop=True)
+    result = pandas.concat([result, read_socialtv_files(just_train=True)], ignore_index=True).reset_index(drop=True)
+    result = pandas.concat([result, read_stompol_files(just_train=True)], ignore_index=True).reset_index(drop=True)
+    return result
+
+
+def parse_xml(filepath, parser='xml'):
+    if parser == 'lxml':
+        return etree.parse(filepath)
+    elif parser == 'xml':
+        parser = ET.XMLParser(encoding='UTF-8')
+        return ET.parse(filepath, parser=parser)
 
 
 def get_dataframe_from_coah(data):
@@ -63,7 +87,7 @@ def get_dataframe_from_spamore(data):
     return result_df
 
 
-def get_dataframe_from_tass2019(data, encode_label=True):
+def get_dataframe_from_intertass(data, encode_label=True):
     tweet_id, user, content, day_of_week, month, hour, lang, sentiment = [], [], [], [], [], [], [], []
     for tweet in data.iter('tweet'):
         for element in tweet.iter():
@@ -133,6 +157,28 @@ def get_dataframe_from_general(data):
     return result_df
 
 
+def get_dataframe_from_socialtv(data):
+    content, sentiment = [], []
+    for element in data.iter('tweet'):
+        content.append(
+            etree.tostring(element, method='text', encoding='UTF-8').decode('utf-8').strip('\n'))
+        sent_points = 0
+        for child in element:
+            if child.tag == 'sentiment' and 'polarity' in child.attrib:
+                if child.attrib['polarity'] == 'P':
+                    sent_points = sent_points + 1
+                elif child.attrib['polarity'] == 'N':
+                    sent_points = sent_points - 1
+        sentiment.append('0' if sent_points < 0 else ('1' if sent_points == 0 else '2'))
+
+    result_df = pd.DataFrame()
+    print(len(content))
+    print(len(sentiment))
+    result_df['content'] = content
+    result_df['sentiment'] = sentiment
+    return result_df
+
+
 def get_dataframe_from_ftx_format(lang, folder, set='', train_plus_dev=False):
     result = pd.DataFrame()
     sets = list()
@@ -157,8 +203,8 @@ def get_dataframe_from_ftx_format(lang, folder, set='', train_plus_dev=False):
     return result
 
 
-def read_tass2019_files():
-    name = 'tass2019'
+def read_intertass_files(just_train=False):
+    name = 'intertass'
     train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
     dev_data = pd.read_csv('../dataset/csv/{}/{}_dev.csv'.format(name, name), encoding='utf-8', sep='\t')
     test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
@@ -169,20 +215,26 @@ def read_tass2019_files():
         test_data['sentiment'] = test_data['sentiment'].transform(lambda x: reduce_labels(name, x))
 
     label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
-    return train_data, dev_data, test_data, label_dictionary
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, label_dictionary
 
 
-def read_coah_files():
+def read_coah_files(just_train=False):
     name = 'coah'
     coah_data = pd.read_csv('../dataset/csv/{}/{}.csv'.format(name, name), encoding='utf-8', sep='\t')
 
     if B_REDUCED:
         coah_data['sentiment'] = coah_data['sentiment'].transform(lambda x: reduce_labels(name, x))
     train_data, dev_data, test_data = dataframe_split(coah_data)
-    return train_data, dev_data, test_data, map(str, train_data['sentiment'].unique())
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, map(str, train_data['sentiment'].unique())
 
 
-def read_general_files():
+def read_general_files(just_train=False):
     name = 'general'
     train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
     test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
@@ -193,10 +245,13 @@ def read_general_files():
 
     train_data, dev_data = dataframe_split(train_data, just_train=True)
     label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
-    return train_data, dev_data, test_data, label_dictionary
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, label_dictionary
 
 
-def read_politics_files():
+def read_politics_files(just_train=False):
     name = 'politics'
     train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format('general', 'general'), encoding='utf-8', sep='\t')
     test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
@@ -207,11 +262,40 @@ def read_politics_files():
 
     train_data, dev_data = dataframe_split(train_data, just_train=True)
     label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
-    return train_data, dev_data, test_data, label_dictionary
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, label_dictionary
+
+
+def read_socialtv_files(just_train=False):
+    name = 'socialtv'
+    train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
+    test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
+
+    train_data, dev_data = dataframe_split(train_data, just_train=True)
+    label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, label_dictionary
+
+
+def read_stompol_files(just_train=False):
+    name = 'stompol'
+    train_data = pd.read_csv('../dataset/csv/{}/{}_train.csv'.format(name, name), encoding='utf-8', sep='\t')
+    test_data = pd.read_csv('../dataset/csv/{}/{}_test.csv'.format(name, name), encoding='utf-8', sep='\t')
+
+    train_data, dev_data = dataframe_split(train_data, just_train=True)
+    label_dictionary = ['0', '1', '2'] if B_REDUCED else ['0', '1', '2', '3']
+    if just_train:
+        return train_data
+    else:
+        return train_data, dev_data, test_data, label_dictionary
 
 
 def reduce_labels(dataset, x):
-    if dataset == 'tass2019' or 'general' or 'politics':
+    if dataset == 'intertass' or 'general' or 'politics':
         return x - 1 if x > 1 else x
     elif dataset == 'coah':
         return 0 if x < 3 else (1 if x == 3 else 2)
@@ -229,6 +313,6 @@ def dataframe_split(dataframe, just_train=False):
 
 
 if __name__ == '__main__':
-    df = get_dataframe_from_general(parse_xml('../dataset/corpus/tass2013/politics-test-tagged.xml'))
+    df = get_dataframe_from_socialtv(parse_xml('../dataset/corpus/tass2015/stompol-test-tagged.xml', parser='lxml'))
 
-    df.to_csv(path_or_buf='../dataset/csv/politics/politics_test.csv', encoding='utf-8', sep='\t', index=False)
+    df.to_csv(path_or_buf='../dataset/csv/stompol/stompol_test.csv', encoding='utf-8', sep='\t', index=False)
