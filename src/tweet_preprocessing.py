@@ -38,7 +38,6 @@ def preprocess_data(data, conf='main'):
             letrep=EMB_PREP_LETREP, lowercasing=EMB_PREP_LOWER, number=EMB_PREP_NUMBER, punctuation=EMB_PREP_PUNCT,
             xque=EMB_PREP_XQUE, username=EMB_PREP_USERNAME, url=EMB_PREP_URL)
     # TOKENIZE
-    print("Tokenizing...")
     data['final_data'] = [tokenize_sentence(row) for row in data.preprocessed]
 
     # LIBREOFFICE CORRECTION

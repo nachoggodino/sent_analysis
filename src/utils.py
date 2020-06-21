@@ -33,7 +33,7 @@ def print_f1_score(predictions, labels, confusion_matrix=CONFUSION_MATRIX, prec_
         print(pd.crosstab(labs, preds))
     precision = precision_score(labs, preds, average='macro')
     recall = recall_score(labs, preds, average='macro')
-    score = f1_score(labs, preds, average='macro')  # 2*(precision*recall)/(precision+recall)
+    score = 100*f1_score(labs, preds, average='macro')  # 2*(precision*recall)/(precision+recall)
     print("F1-SCORE: " + str(score))
     if prec_and_rec:
         print("Recall: " + str(recall))

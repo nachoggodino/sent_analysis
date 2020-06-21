@@ -5,6 +5,7 @@ from flair.data import Sentence
 from flair.trainers import ModelTrainer
 from flair.embeddings import BertEmbeddings
 from sklearn.utils.class_weight import compute_class_weight
+from tqdm import tqdm
 import pandas as pd
 
 from src import utils, data_fetching, tweet_preprocessing
@@ -13,7 +14,7 @@ from src.config import *
 
 def predict_with_bert_model(model, data, label_dictionary):
     probabilities_list = list()
-    for text in data:
+    for text in tqdm(data, desc="Predicting with BERT"):
         row_prob = dict()
         result = model.predict(Sentence(text), multi_class_prob=True)
         for label in zip(result[0].labels):

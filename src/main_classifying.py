@@ -17,6 +17,7 @@ import numpy
 import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=Warning)
 
 
 def perform_count_vectors(train_set, dev_set, print_oovs=False, classic_bow=False):

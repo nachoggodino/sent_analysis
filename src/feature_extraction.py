@@ -3,7 +3,7 @@ import pandas as pd
 from textacy import keyterms
 from src.config import *
 from src import tweet_preprocessing
-
+from tqdm import tqdm
 regex_uppercase = re.compile(r"\b[A-Z][A-Z]+\b")  # TODO
 
 
@@ -80,7 +80,7 @@ def extract_sent_words_feature(tokenized_data, data_feed, sentiment_feed, lexico
     neg_result = []
     neutral_result = []
     none_result = []
-    for index, tokenized_tweet in enumerate(tokenized_data):
+    for index, tokenized_tweet in tqdm(enumerate(tokenized_data)):
         pos_count = sum(word in tokenized_tweet for word in positive_voc)
         neg_count = sum(word in tokenized_tweet for word in negative_voc)
         length = len(tokenized_tweet)
@@ -94,27 +94,28 @@ def extract_sent_words_feature(tokenized_data, data_feed, sentiment_feed, lexico
 
 def get_sentiment_vocabulary(data, sentiment_feed, positive, negative, lexicons, discriminating_terms,
                              discriminating_words):
-    pos_neg_tweets = []
-    pos_neg_bool_labels = []
-    for index, tweet in enumerate(data):
-        sentiment = sentiment_feed[index]
-        if sentiment == positive:
-            pos_neg_tweets.append(tweet)
-            pos_neg_bool_labels.append(True)
-        elif sentiment == negative:
-            pos_neg_tweets.append(tweet)
-            pos_neg_bool_labels.append(False)
-    positive_vocabulary, negative_vocabulary = keyterms.most_discriminating_terms(
-        pos_neg_tweets, pos_neg_bool_labels, top_n_terms=discriminating_words)
-
-    pos_df = pd.read_csv('../resources/lexicons/isol/positivas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
-    neg_df = pd.read_csv('../resources/lexicons/isol/negativas_mejorada.csv', encoding='latin-1', header=None, names=['words'])
-
     positive_result, negative_result = set(), set()
     if lexicons:
+        pos_df = pd.read_csv('../resources/lexicons/isol/positivas_mejorada.csv', encoding='latin-1', header=None,
+                             names=['words'])
+        neg_df = pd.read_csv('../resources/lexicons/isol/negativas_mejorada.csv', encoding='latin-1', header=None,
+                             names=['words'])
         positive_result = positive_result.union(set(pos_df['words'].array))
         negative_result = negative_result.union(set(neg_df['words'].array))
+
     if discriminating_terms:
+        pos_neg_tweets = []
+        pos_neg_bool_labels = []
+        for index, tweet in enumerate(data):
+            sentiment = sentiment_feed[index]
+            if sentiment == positive:
+                pos_neg_tweets.append(tweet)
+                pos_neg_bool_labels.append(True)
+            elif sentiment == negative:
+                pos_neg_tweets.append(tweet)
+                pos_neg_bool_labels.append(False)
+        positive_vocabulary, negative_vocabulary = keyterms.most_discriminating_terms(
+            pos_neg_tweets, pos_neg_bool_labels, top_n_terms=discriminating_words)
         positive_result = positive_result.union(set(positive_vocabulary))
         negative_result = negative_result.union(set(negative_vocabulary))
     return positive_result, negative_result
