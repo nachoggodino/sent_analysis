@@ -2,6 +2,7 @@ import fasttext
 from src import utils, config, data_fetching, tweet_preprocessing
 from src.config import *
 import pandas as pd
+from tqdm import tqdm
 
 
 def predict_with_fasttext_model(model, data, label_dictionary):
@@ -62,8 +63,6 @@ if __name__ == '__main__':
                                           dim=DIMENSION, verbose=5)
 
         model.save_model(path='../fasttext/models/{}_{}'.format(S_DATASET, FT_MODEL_NAME))
-
-        print(len(model.words))
 
         predictions = [int(model.predict(tweet)[0][0][-1]) for tweet in dev_data['content']]
         print('DEV')

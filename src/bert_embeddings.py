@@ -54,10 +54,10 @@ if __name__ == '__main__':
                                                dev_file='intertass_{}_dev.txt'.format(S_DATASET),
                                                test_file='intertass_{}_test.txt'.format(S_DATASET))
 
-        class_weights = compute_class_weight('balanced', [0, 1, 2, 3], y=train_data.sentiment)
-        dict_weights = dict()
-        for i, label in enumerate(class_weights):
-            dict_weights.update({str(label): class_weights[i]})
+        # class_weights = compute_class_weight('balanced', [0, 1, 2, 3], y=train_data.sentiment)
+        # dict_weights = dict()
+        # for i, label in enumerate(class_weights):
+        #     dict_weights.update({str(label): class_weights[i]})
 
         # word_embeddings = [BertEmbeddings('bert-base-multilingual-cased')]
         word_embeddings = [BertEmbeddings('dccuchile/bert-base-spanish-wwm-cased')]
@@ -66,7 +66,7 @@ if __name__ == '__main__':
                                                     rnn_type='LSTM', reproject_words_dimension=256, dropout=0.35,
                                                     rnn_layers=2)
         classifier = TextClassifier(document_embeddings, label_dictionary=corpus.make_label_dictionary(),
-                                    loss_weights=dict_weights, multi_label=False)
+                                    multi_label=False)
 
         trainer = ModelTrainer(classifier, corpus)
         trainer.train('../bert/beto/models/{}/{}/'.format(BERT_MODEL_NAME, S_DATASET), max_epochs=20,

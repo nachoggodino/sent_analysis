@@ -114,8 +114,11 @@ if __name__ == '__main__':
             test_feat_probabilities = clf.predict_proba(test_set)
             utils.print_f1_score(test_feat_predictions, test_labels)
 
+        model_set = S_DATASET if not B_TRAIN_WITH_ALL else 'intertass'
+        # FASTTEXT
         utils.print_separator("FASTTEXT MODEL")
-        fasttext_path = '{}/{}_{}'.format(FT_MODEL_PATH, S_DATASET, FT_MODEL_NAME)
+
+        fasttext_path = '{}/{}_{}'.format(FT_MODEL_PATH, model_set, FT_MODEL_NAME)
         fasttext_model = fasttext.load_model(path=fasttext_path)
         dev_fasttext_probabilities, dev_fasttext_predictions = fasttext_embedding.predict_with_fasttext_model(
             fasttext_model, dev_data.content, label_dictionary)
@@ -128,7 +131,7 @@ if __name__ == '__main__':
 
         # BERT
         utils.print_separator("BERT MODEL")
-        bert_path = '{}/{}/{}/best-model.pt'.format(BERT_MODEL_PATH, BERT_MODEL_NAME, S_DATASET)
+        bert_path = '{}/{}/{}/best-model.pt'.format(BERT_MODEL_PATH, BERT_MODEL_NAME, model_set)
         bert_model = TextClassifier.load(bert_path)
         dev_bert_probabilities, dev_bert_predictions = bert_embeddings.predict_with_bert_model(
             bert_model, dev_data.content, label_dictionary)

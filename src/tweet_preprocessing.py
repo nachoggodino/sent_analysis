@@ -68,7 +68,7 @@ def preprocess_data(data, conf='main'):
 def preprocess(data, emojis=False, hashtags=False, url=False, username=False, letrep=False, laughter=False,
                xque=False, punctuation=False, number=False, lowercasing=False, all_prep=False):
 
-    result, emojis = [], list()
+    result = []
     for tweet in data:
         clean_tweet = tweet
         clean_tweet = clean_tweet.replace('\n', '').strip()
@@ -166,3 +166,37 @@ def perform_upsampling(dataframe):
     df['sentiment'] = y_resampled
     df = df.sample(frac=1).reset_index(drop=True)
     return df
+
+
+def preprocess_and_analyze(data):
+
+    result = []
+    hashtags, urls, usernames, letreps, laughters, numbers = list(), list(), list(), list(), list(), list()
+    emojis, qque, xpor, dde, xqs, pqs = list(), list(), list(), list(), list(), list()
+
+    for tweet in data:
+
+        emoji_tweet = emoji.demojize(tweet, use_aliases=True)
+        emojis.extend(re.findall(r":[a-z_0-9]*?:", emoji_tweet, re.IGNORECASE))
+
+        hashtags.extend(re.findall(r"\B#\w+", tweet))  # HASHTAGS
+        urls.extend(re.findall(r"http\S+", tweet))  # URL
+        usernames.extend(re.findall(r"\B@\w+", tweet))  # URL
+        letreps.extend(re.findall(r"(\w)(\1{2,})", tweet))  # URL
+
+        laughters.extend(re.findall(r"[a-zA-Z]*jaj[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+        laughters.extend(re.findall(r"[a-zA-Z]*hah[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+        laughters.extend(re.findall(r"[a-zA-Z]*jej[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+        laughters.extend(re.findall(r"[a-zA-Z]*joj[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+        laughters.extend(re.findall(r"[a-zA-Z]*jij[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+        laughters.extend(re.findall(r"[a-zA-Z]*lol[a-zA-Z]*", tweet, re.IGNORECASE))  # URL
+
+        numbers.extend(re.findall(r"\d+", tweet))  # URL
+
+        qque.extend(re.findall(r"\b(q)\b", tweet, re.IGNORECASE))  # q = que
+        xpor.extend(re.findall(r"\b(x)\b", tweet, re.IGNORECASE))  # x = por
+        dde.extend(re.findall(r"\b(d)\b", tweet, re.IGNORECASE))  # d = de
+        xqs.extend(re.findall(r"\b(xq)\b", tweet, re.IGNORECASE))  # xq = porque
+        pqs.extend(re.findall(r"\b(pq)\b", tweet, re.IGNORECASE))  # pq = porque
+
+    return hashtags, urls, usernames, letreps, laughters, numbers, emojis, qque, xpor, dde, xqs, pqs

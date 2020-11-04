@@ -18,15 +18,16 @@ sgd = SGDClassifier()
 B_TEST_PHASE = True  # If true, the test set is used.
 
 # DATA FETCH
-B_REDUCED = False  # If true, NEU and NONE are treated as one category. DO NOT USE
+B_TRAIN_WITH_ALL = True  # If True, the training data is composed by all the datasets training data
+B_REDUCED = B_TRAIN_WITH_ALL or True  # If true, NEU and NONE are treated as one category.
 B_TRAIN_PLUS_DEV = False  # If true, the train and dev sets are merged
-DATASET_ARRAY = ['tass2019']
+DATASET_ARRAY = ['intertass'] #, 'politics', 'stompol', 'socialtv', 'general']
 SHUFFLE_SEED = 1234
 SPLIT_SEP_1 = 0.7
 SPLIT_SEP_2 = 0.85
 
 # DATA AUGMENTATION
-B_UPSAMPLING = True  # If true, upsampling is performed.
+B_UPSAMPLING = False  # If true, upsampling is performed.
 B_BACKTRANSLATION = False  # If true, data is augmented using the backtranslation strategy.
 
 # VOCABULARY FUNCTIONS. Both can be used at the same time
@@ -62,17 +63,17 @@ PREP_USERNAME = False
 PREP_URL = False
 PREP_PUNCT = False
 PREP_NUMBER = False
-PREP_LOWER = False
+PREP_LOWER = True
 PREP_LAUGHTER = False
 PREP_LETREP = False
 PREP_XQUE = False
-PREP_ALL = True
+PREP_ALL = False
 
 EMB_PREP_EMOJI = False
 EMB_PREP_HASHTAGS = False
 EMB_PREP_USERNAME = False
 EMB_PREP_URL = False
-EMB_PREP_PUNCT = True
+EMB_PREP_PUNCT = False
 EMB_PREP_NUMBER = False
 EMB_PREP_LOWER = True
 EMB_PREP_LAUGHTER = False
@@ -95,7 +96,7 @@ B_FEAT_LAUGHTER = True
 
 # TODO                                      FASTTEXT
 FT_MODEL_PATH = '../fasttext/models'
-FT_MODEL_NAME = 'june_test1'
+FT_MODEL_NAME = 'all_reduced_lower'
 
 FT_LEARNING_RATE = 0.05
 FT_WORDGRAM = 2
@@ -109,7 +110,7 @@ B_INGEOTEC = True
 
 # TODO                                      BERT
 BERT_MODEL_PATH = '../bert/beto/models'
-BERT_MODEL_NAME = 'june_test1'
+BERT_MODEL_NAME = 'all_reduced_lower'
 
 # TODO                                      DEMO
 B_DEMO = False
@@ -120,3 +121,8 @@ DEMO_TEXTS = tweets_to_test = ['La radio de cercanía, la radio más cercana a l
                   '@cinthiaszc jajajaja me vas a decir a mi mi abuela cocina tan rico que mando al tacho la dieta :v',  # 0
                   '@JuanPaUrrego ¡Que lindo eres que lindo actúas!! te adoroVen a Perú pls'  # 3
                   ]
+
+# TODO                                      ANALYSIS
+B_TWEET_LENGTH_ANALYSIS = True
+B_HASHTAG_ANALYSIS = True
+B_EMOJI_ANALYSIS = True
